@@ -12,7 +12,7 @@ except ImportError:
 
 
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 DEFAULT_HOST, DEFAULT_PORT = 'localhost', 4518
 socketserver.TCPServer.allow_reuse_address = True
 
@@ -45,7 +45,7 @@ class DSPRPCServer(object):
           s.send_response(420)
           s.end_headers()
           s.wfile.write(pickle.dumps(e, protocol=-1))
-    self.httpd = socketserver.TCPServer(("localhost", port), Handler)
+    self.httpd = socketserver.ThreadingTCPServer(("localhost", port), Handler)
     t = threading.Thread(target=self.httpd.serve_forever)
     t.daemon = True
     t.start()

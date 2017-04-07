@@ -1,4 +1,4 @@
-import collections, requests, time, unittest
+import collections, requests, threading, time, unittest
 import dsprpc
 
 class TestDSPRPC(unittest.TestCase):
@@ -71,7 +71,27 @@ class TestDSPRPC(unittest.TestCase):
     end = time.clock()
     took = end-start
     print('%i requests took %fs' % (n, took)) # 0.4s on my machine
+    self.assertLess(took, 2)
     s.shutdown()
+
+  def test_threading(self):
+    class O(object):
+      def y(self):
+        time.sleep(1)
+        return 'woot'
+    s = dsprpc.DSPRPCServer(O())
+    client = dsprpc.DSPRPCClient()
+    def f():
+      client.y()
+    threads = [threading.Thread(target=f) for i in range(5)]
+    start = time.clock()
+    [t.start() for t in threads]
+    [t.join() for t in threads]
+    end = time.clock()
+    took = end-start
+    self.assertLess(took, 3)
+    s.shutdown()
+
 
     
 if __name__ == '__main__':
