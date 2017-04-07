@@ -12,13 +12,13 @@ except ImportError:
 
 
 
-__version__ = '0.1.0'
-DEFAULT_PORT = 4518
+__version__ = '0.2.0'
+DEFAULT_HOST, DEFAULT_PORT = 'localhost', 4518
 socketserver.TCPServer.allow_reuse_address = True
 
 
 class DSPRPCServer(object):
-  def __init__(self, target, port=DEFAULT_PORT):
+  def __init__(self, target, host=DEFAULT_HOST, port=DEFAULT_PORT):
     self.target = target
     class Handler(http_server.BaseHTTPRequestHandler):
       def do_RPC(s):
@@ -29,7 +29,7 @@ class DSPRPCServer(object):
           attr = attr[:-2]
         else:
           is_func = False
-        args, kwargs = pickle.loads(s.rfile.read(content_length)) if content_length else (),{}
+        args, kwargs = pickle.loads(s.rfile.read(content_length)) if content_length else ((),{})
         try:
           ret = getattr(target, attr)
           if is_func:
@@ -55,7 +55,7 @@ class DSPRPCServer(object):
     
 
 class DSPRPCClient(object):
-  def __init__(self, port=DEFAULT_PORT):
+  def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT):
     self.port = port
   
   def __getattr__(self, attr):
@@ -66,7 +66,10 @@ class DSPRPCClient(object):
       raise pickle.loads(resp.content)
     elif resp.status_code==202:
       def f(*args, **kwargs):
-        resp = requests.request('RPC', 'http://localhost:%i/%s()' % (self.port, attr))
+        data = None
+        if args or kwargs:
+          data = pickle.dumps((args, kwargs), protocol=-1)
+        resp = requests.request('RPC', 'http://localhost:%i/%s()' % (self.port, attr), data=data)
         if resp.status_code==200:
           return pickle.loads(resp.content)
         elif resp.status_code==420:
