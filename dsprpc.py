@@ -12,7 +12,7 @@ except ImportError:
 
 
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 DEFAULT_HOST, DEFAULT_PORT = 'localhost', 4518
 socketserver.TCPServer.allow_reuse_address = True
 
@@ -45,7 +45,7 @@ class DSPRPCServer(object):
           s.send_response(420)
           s.end_headers()
           s.wfile.write(pickle.dumps(e, protocol=-1))
-    self.httpd = socketserver.ThreadingTCPServer(("localhost", port), Handler)
+    self.httpd = socketserver.ThreadingTCPServer((host, port), Handler)
     t = threading.Thread(target=self.httpd.serve_forever)
     t.daemon = True
     t.start()
@@ -56,6 +56,7 @@ class DSPRPCServer(object):
 
 class DSPRPCClient(object):
   def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT):
+    self.host = host
     self.port = port
   
   def __getattr__(self, attr):
@@ -69,7 +70,7 @@ class DSPRPCClient(object):
         data = None
         if args or kwargs:
           data = pickle.dumps((args, kwargs), protocol=-1)
-        resp = requests.request('RPC', 'http://localhost:%i/%s()' % (self.port, attr), data=data)
+        resp = requests.request('RPC', 'http://%s:%i/%s()' % (self.host, self.port, attr), data=data)
         if resp.status_code==200:
           return pickle.loads(resp.content)
         elif resp.status_code==420:
