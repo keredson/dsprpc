@@ -1,18 +1,21 @@
-import pickle, requests, threading
+import pickle, threading
 
 try:
   import http.server as http_server
 except ImportError:
   import BaseHTTPServer as http_server
-
 try:
   import socketserver
 except ImportError:
   import SocketServer as socketserver
+try:
+  import requests
+except ImportError:
+  pass
 
 
 
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 DEFAULT_HOST, DEFAULT_PORT = 'localhost', 4518
 socketserver.TCPServer.allow_reuse_address = True
 
